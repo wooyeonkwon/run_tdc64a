@@ -1,10 +1,13 @@
 // Usgage :  ROOT> .L tdc64a_test.C
 //           ROOT> run_tdc64a(1000) //for 1000 events 
+//           ROOT> run_tdc64a(1000, 5000) //collect until trigger # reaches 5000
 
 #include <unistd.h>
 #include <stdio.h>
+#include <time.h>
+#include <chrono>
 
-int run_tdc64a(int Nevent = 1000) {
+int run_tdc64a(int Nevent = 1000, int Ntrig = -1) {
   // local variables
   int sid = 1;  	               	// TDC64A USB3 SID
   
@@ -34,10 +37,18 @@ int run_tdc64a(int Nevent = 1000) {
   int i;
   std::vector<TH1F*> h(64, nullptr);
 
-  // set data filename
-  sprintf(filename, "tdc64a.txt");
+  // set data filename with timestamp
+  time_t now = time(nullptr);
+  tm *local_time = localtime(&now);
+  char time_suffix[64];
+  strftime(time_suffix, sizeof(time_suffix), "%Y%m%d_%H%M%S", local_time);
+  sprintf(filename, "tdc64a_%s.txt", time_suffix);
 
   // define some histograms
+  gStyle->SetPadTopMargin(0.03);
+  gStyle->SetPadRightMargin(0.03);
+  gStyle->SetPadBottomMargin(0.08);
+  gStyle->SetPadLeftMargin(0.08);
   c1 = new TCanvas("c1", "KFADC", 1500, 1000);
 //  c1->Divide(8 ,8);
 //  c1->Divide(4 ,4);
@@ -100,7 +111,11 @@ int run_tdc64a(int Nevent = 1000) {
   // start DAQ
   tdc->TDC64Astart(sid);
 
-  for (evtn = 0; evtn < Nevent; evtn++) {
+  const bool use_trig_mode = (Ntrig > 0);
+  auto start_time = std::chrono::steady_clock::now();
+  evtn = 0;
+  trgn = 0;
+  while (use_trig_mode ? (trgn < Ntrig) : (evtn < Nevent)) {
     // check data size, if it is not 0, read data
     data_size = 0;
     while (!data_size)
@@ -122,7 +137,21 @@ int run_tdc64a(int Nevent = 1000) {
 
 //    fprintf(fp, "---------------------------------------\n");
 
-    printf("%d / %d is taken, trigger # = %d data_size = %d\n", evtn + 1, Nevent, trgn, data_size);
+    auto now_time = std::chrono::steady_clock::now();
+    std::chrono::duration<double> elapsed = now_time - start_time;
+    double elapsed_seconds = elapsed.count();
+    double rate = 0.0;
+    int count_for_rate = use_trig_mode ? trgn : (evtn + 1);
+    if (elapsed_seconds > 0.0) {
+      rate = count_for_rate / elapsed_seconds;
+    }
+    if (use_trig_mode) {
+      printf("event %d, trigger # = %d / %d data_size = %d rate = %.2f evt/s\n",
+             evtn + 1, trgn, Ntrig, data_size, rate);
+    } else {
+      printf("%d / %d is taken, trigger # = %d data_size = %d rate = %.2f evt/s\n",
+             evtn + 1, Nevent, trgn, data_size, rate);
+    }
 
     for (int i = 0; i < 64; ++i) {
       c1->cd(i + 1);
@@ -131,6 +160,7 @@ int run_tdc64a(int Nevent = 1000) {
 //*/
     c1->Modified();
     c1->Update();
+    evtn++;
   }
 
   // reset 
@@ -147,6 +177,3 @@ int run_tdc64a(int Nevent = 1000) {
   
   return 0;	
 }
-
-
-
