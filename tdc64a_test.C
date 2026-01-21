@@ -34,7 +34,7 @@ int run_tdc64a(int Nevent = 1000, int Ntrig = -1) {
   int nbins = 4096;                      // number of bins in us
   FILE *fp;
   int i;
-  std::vector<TH1F*> h(64, nullptr);
+  TH1F *h[64] = {0};
 
   // set data filename with timestamp
   time_t now = time(nullptr);
