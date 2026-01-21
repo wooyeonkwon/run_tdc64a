@@ -37,7 +37,7 @@ int run_tdc64a(int Nevent = 1000, int Ntrig = -1) {
   TH1F *h[64] = {0};
 
   // set data filename with timestamp
-  time_t now = time(nullptr);
+  time_t now = time(NULL);
   tm *local_time = localtime(&now);
   char time_suffix[64];
   strftime(time_suffix, sizeof(time_suffix), "%Y%m%d_%H%M%S", local_time);
@@ -111,7 +111,7 @@ int run_tdc64a(int Nevent = 1000, int Ntrig = -1) {
   tdc->TDC64Astart(sid);
 
   const bool use_trig_mode = (Ntrig > 0);
-  time_t start_time = time(nullptr);
+  time_t start_time = time(NULL);
   evtn = 0;
   trgn = 0;
   int data_size_one_count = 0;
@@ -140,7 +140,7 @@ int run_tdc64a(int Nevent = 1000, int Ntrig = -1) {
 
 //    fprintf(fp, "---------------------------------------\n");
 
-    time_t now_time = time(nullptr);
+    time_t now_time = time(NULL);
     double elapsed_seconds = difftime(now_time, start_time);
     double rate = 0.0;
     int count_for_rate = use_trig_mode ? trgn : (evtn + 1);
