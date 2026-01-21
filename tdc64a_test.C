@@ -5,7 +5,6 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <time.h>
-#include <chrono>
 
 int run_tdc64a(int Nevent = 1000, int Ntrig = -1) {
   // local variables
@@ -112,7 +111,7 @@ int run_tdc64a(int Nevent = 1000, int Ntrig = -1) {
   tdc->TDC64Astart(sid);
 
   const bool use_trig_mode = (Ntrig > 0);
-  auto start_time = std::chrono::steady_clock::now();
+  time_t start_time = time(nullptr);
   evtn = 0;
   trgn = 0;
   int data_size_one_count = 0;
@@ -141,9 +140,8 @@ int run_tdc64a(int Nevent = 1000, int Ntrig = -1) {
 
 //    fprintf(fp, "---------------------------------------\n");
 
-    auto now_time = std::chrono::steady_clock::now();
-    std::chrono::duration<double> elapsed = now_time - start_time;
-    double elapsed_seconds = elapsed.count();
+    time_t now_time = time(nullptr);
+    double elapsed_seconds = difftime(now_time, start_time);
     double rate = 0.0;
     int count_for_rate = use_trig_mode ? trgn : (evtn + 1);
     double eff = 0.0;
